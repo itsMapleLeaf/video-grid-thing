@@ -113,7 +113,7 @@ function getFittingColumnCountRecursive(
     return currentColumnCount
   }
 
-  // if it cannot, the grid is too tall. we need to subtract another column to make it fit
+  // if it cannot, the grid is too tall. we need to add another column to make it fit
   return getFittingColumnCountRecursive(
     cellCount,
     viewportWidth,
