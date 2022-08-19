@@ -21,6 +21,9 @@ export default function App() {
   const cellHeight = cellWidth * (9 / 16)
   const gridHeight = cellHeight * rowCount + gap * (rowCount - 1)
 
+  // we can get the ratio of the rect to the grid to scale it down,
+  // then only use the smallest number to contain it within the viewport
+  // (this is how "contain" scaling works)
   const containScale = Math.min(
     rect.width / gridWidth,
     rect.height / gridHeight,
@@ -42,27 +45,34 @@ export default function App() {
           +
         </button>
       </header>
-      <main
-        ref={ref}
-        className="flex-1 flex flex-col bg-gray-800 overflow-hidden"
-      >
-        <div
-          className="m-auto flex flex-wrap items-start content-start justify-center"
-          style={{
-            gap,
-            width: gridWidth * containScale,
-            height: gridHeight * containScale,
-          }}
-        >
-          {Array.from({ length: cellCount }, (_, i) => (
-            <div
-              key={i}
-              style={{ width: `calc(${100 / columnCount}% - ${gap}px)` }}
-              className="aspect-video border-2 border-gray-500 rounded-lg"
-            />
-          ))}
-        </div>
-      </main>
+      <div className="flex-1 p-4 min-h-0 bg-gray-800">
+        <main ref={ref} className="h-full flex flex-col overflow-hidden">
+          <div
+            className="m-auto flex flex-wrap items-start content-start justify-center"
+            style={{
+              gap,
+              width: gridWidth * containScale,
+              height: gridHeight * containScale,
+            }}
+          >
+            {Array.from({ length: cellCount }, (_, i) => (
+              <div
+                key={i}
+                style={{
+                  width: `calc(${100 / columnCount}% - ${
+                    // this is fucking cursed
+                    // we can't just subtract the gap because we need it to be minus one
+                    // so we have to take a chip out of the gap that's like...
+                    // the fraction of the whole thing???
+                    gap * ((columnCount - 1) / columnCount)
+                  }px)`,
+                }}
+                className="aspect-video border-2 border-gray-500 rounded-lg"
+              />
+            ))}
+          </div>
+        </main>
+      </div>
     </div>
   )
 }
@@ -98,10 +108,12 @@ function getFittingColumnCountRecursive(
   const rowCount = Math.ceil(cellCount / currentColumnCount)
   const gridHeight = rowCount * cellHeight + (rowCount - 1) * gap
 
+  // if the grid can vertically fit within the viewport, then we're done, we have our column count
   if (gridHeight < viewportHeight) {
     return currentColumnCount
   }
 
+  // if it cannot, the grid is too tall. we need to subtract another column to make it fit
   return getFittingColumnCountRecursive(
     cellCount,
     viewportWidth,
